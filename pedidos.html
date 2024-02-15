@@ -227,7 +227,7 @@
 
         sugestoes.forEach(sugestao => {
             const sugestaoElement = document.createElement('div');
-            sugestaoElement.textContent = `${sugestao.nome_produto} - R$${sugestao.preco_produto.toFixed(2)}`;
+            sugestaoElement.textContent = `${sugestao.nome_produto} - R$${sugestao.preco_produto}`;
             sugestaoElement.addEventListener('click', () => {
                 produtoInput.value = sugestao.nome_produto;
                 valorInput.value = `R$${sugestao.preco_produto.toFixed(2)}`;
