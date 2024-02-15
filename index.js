@@ -17,6 +17,14 @@ const usuario = 'admin';
 const senha = '123456';
 const secret = 'secreto'
 
+// Define o caminho para servir arquivos estáticos (como o HTML) da mesma pasta
+app.use(express.static(__dirname));
+
+// Rota padrão para servir a página index.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     if(username == usuario && password == senha){
