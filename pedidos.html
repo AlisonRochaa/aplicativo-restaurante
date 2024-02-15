@@ -230,7 +230,7 @@
             sugestaoElement.textContent = `${sugestao.nome_produto} - R$${sugestao.preco_produto}`;
             sugestaoElement.addEventListener('click', () => {
                 produtoInput.value = sugestao.nome_produto;
-                valorInput.value = `R$${sugestao.preco_produto.toFixed(2)}`;
+                valorInput.value = `R$${sugestao.preco_produto}`;
 
                 // Oculta as sugestões de produtos após selecionar uma sugestão
                 sugestoesProdutosDiv.innerHTML = '';
