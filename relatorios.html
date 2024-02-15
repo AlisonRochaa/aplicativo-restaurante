@@ -158,14 +158,18 @@
     
     <script> //SCRIPT PARA EXCLUIR UM PEDIDO BASEADO NO ID
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const botaoExcluirPedido = document.getElementById('botaoExcluirPedido');
+document.addEventListener('DOMContentLoaded', () => {
+    const botaoExcluirPedido = document.getElementById('botaoExcluirPedido');
 
-        botaoExcluirPedido.addEventListener('click', async (event) => {
-            event.preventDefault();
+    botaoExcluirPedido.addEventListener('click', async (event) => {
+        event.preventDefault();
 
-            const idPedido = document.getElementById('excluirPedido').value;
+        const idPedido = document.getElementById('excluirPedido').value;
 
+        // Exibir alerta de confirmação
+        const confirmacao = window.confirm('Tem certeza de que deseja excluir este pedido?');
+
+        if (confirmacao) {
             try {
                 const token = document.cookie.split('; ').find(row => row.startsWith('token')).split('=')[1];
                 const response = await fetch(`/pedidos/${idPedido}`, {
@@ -187,8 +191,11 @@
             } catch (error) {
                 console.error('Erro ao excluir o pedido:', error);
             }
-        });
+        } else {
+            alert('Exclusão de pedido cancelada pelo usuário.');
+        }
     });
+});
 
     </script>
 

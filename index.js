@@ -77,7 +77,6 @@ app.delete('/produtos/:id', verificarAcesso, (req, res) => {
             console.error('Erro ao excluir o produto:', error);
             res.status(500).send('Erro ao excluir o produto');
         } else {
-            console.log('Produto excluído com sucesso.');
             res.status(200).send('Produto excluído com sucesso');
         }
     });
@@ -349,58 +348,68 @@ app.delete('/pedidos/:id', verificarAcesso, (req, res) => {
 });
 
 // Rota para alterar status do pedido
-app.post('/alterar-status-pedidos', verificarAcesso, async (req, res) => {
-    try {
-        const pedidosParaAlterar = req.body.pedidos;
+app.post('/alterar-status-pedidos', verificarAcesso, (req, res) => {
+    const pedidosParaAlterar = req.body.pedidos;
 
-        // Verifica se pedidosParaAlterar é uma matriz
-        if (!Array.isArray(pedidosParaAlterar)) {
-            throw new Error('A lista de pedidos para alterar não é uma matriz.');
+    // Verifica se pedidosParaAlterar é uma matriz
+    if (!Array.isArray(pedidosParaAlterar)) {
+        res.status(400).send('A lista de pedidos para alterar não é uma matriz.');
+        return;
+    }
+
+    // Inicia a transação
+    connection.beginTransaction((err) => {
+        if (err) {
+            console.error('Erro ao iniciar transação:', err);
+            res.status(500).send('Erro ao iniciar transação.');
+            return;
         }
-
-        // Inicia a transação
-        await connection.beginTransaction();
 
         // Itera sobre os IDs dos pedidos para alterar
         for (const idPedido of pedidosParaAlterar) {
             // Consulta o status atual do pedido
-            const rows = await new Promise((resolve, reject) => {
-                connection.query('SELECT status_pedido FROM tb_pedidos WHERE id_pedido = ?', [idPedido], (err, results) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(results);
-                    }
-                });
-            });
+            connection.query('SELECT status_pedido FROM tb_pedidos WHERE id_pedido = ?', [idPedido], (err, rows) => {
+                if (err) {
+                    console.error('Erro ao consultar status do pedido:', err);
+                    connection.rollback(() => {
+                        console.error('Rollback da transação devido a erro na consulta.');
+                        res.status(500).send('Erro ao consultar status do pedido.');
+                    });
+                    return;
+                }
 
-            // Verifica se há resultados e se o resultado é um array
-            if (Array.isArray(rows) && rows.length > 0) {
-                const novoStatus = rows[0].status_pedido === 0 ? 1 : 0;
+                if (Array.isArray(rows) && rows.length > 0) {
+                    const novoStatus = rows[0].status_pedido === 0 ? 1 : 0;
 
-                // Atualiza o status do pedido
-                await new Promise((resolve, reject) => {
-                    connection.query('UPDATE tb_pedidos SET status_pedido = ? WHERE id_pedido = ?', [novoStatus, idPedido], (err, results) => {
+                    // Atualiza o status do pedido
+                    connection.query('UPDATE tb_pedidos SET status_pedido = ? WHERE id_pedido = ?', [novoStatus, idPedido], (err) => {
                         if (err) {
-                            reject(err);
-                        } else {
-                            resolve(results);
+                            console.error('Erro ao atualizar status do pedido:', err);
+                            connection.rollback(() => {
+                                console.error('Rollback da transação devido a erro na atualização.');
+                                res.status(500).send('Erro ao atualizar status do pedido.');
+                            });
+                            return;
                         }
                     });
-                });
-            }
+                }
+            });
         }
 
         // Comita a transação
-        await connection.commit();
+        connection.commit((err) => {
+            if (err) {
+                console.error('Erro ao comitar transação:', err);
+                connection.rollback(() => {
+                    console.error('Rollback da transação devido a erro no commit.');
+                    res.status(500).send('Erro ao comitar transação.');
+                });
+                return;
+            }
 
-        res.status(200).send('Status dos pedidos alterado com sucesso.');
-    } catch (error) {
-        // Em caso de erro, faz rollback na transação
-        await connection.rollback();
-        console.error('Erro ao alterar o status dos pedidos:', error);
-        res.status(500).send('Erro ao alterar o status dos pedidos.');
-    }
+            res.status(200).send('Status dos pedidos alterado com sucesso.');
+        });
+    });
 });
 
 // Rota para gerar o relatório em PDF dos pedidos
