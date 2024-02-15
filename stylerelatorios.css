@@ -227,4 +227,15 @@ table th {
     max-width: 1000px;
 }
 
+#sugestoesClientes,
+#sugestoesProdutos {
+        position: absolute;
+        max-width: 410px;
+        left: 0; /* Posiciona a sugestão no canto esquerdo */
+        right: 0; /* Posiciona a sugestão no canto direito */
+        margin-left: auto; /* Centraliza horizontalmente */
+        margin-right: auto; /* Centraliza horizontalmente */
+        z-index: 1;
+        display: block;
+    }
 }
