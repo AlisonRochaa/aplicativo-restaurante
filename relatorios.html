@@ -113,7 +113,7 @@
         try {
             const token = document.cookie.split('; ').find(row => row.startsWith('token')).split('=')[1];
             // Adicionar os dados do cliente ao corpo da requisição
-            const response = await fetch('http://localhost:3000/gerar-pdf', {
+            const response = await fetch('/gerar-pdf', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -168,7 +168,7 @@
 
             try {
                 const token = document.cookie.split('; ').find(row => row.startsWith('token')).split('=')[1];
-                const response = await fetch(`http://localhost:3000/pedidos/${idPedido}`, {
+                const response = await fetch(`/pedidos/${idPedido}`, {
                     method: 'DELETE',
                     headers: {
                         'x-acess-token': token
@@ -197,7 +197,7 @@
     async function obterPedidos(){
         try {
             const token = document.cookie.split('; ').find(row => row.startsWith('token')).split('=')[1];
-            const response = await fetch('http://localhost:3000/historico-pedidos', {
+            const response = await fetch('/historico-pedidos', {
                 headers: {
                     'x-acess-token': token
                 }  
@@ -261,7 +261,7 @@
 
                 try {
                     const token = document.cookie.split('; ').find(row => row.startsWith('token')).split('=')[1];
-                    const response = await fetch(`http://localhost:3000/historico-pedidos-busca?nomeCliente=${nomeCliente}&dataInicio=${dataInicio}&dataFim=${dataFim}`, {
+                    const response = await fetch(`/historico-pedidos-busca?nomeCliente=${nomeCliente}&dataInicio=${dataInicio}&dataFim=${dataFim}`, {
                         headers: {
                             'x-acess-token': token
                         }
@@ -325,7 +325,7 @@
     // Função para fazer requisição assíncrona ao backend e obter sugestões de clientes
     async function obterSugestoesClientes(termo) {
         const token = document.cookie.split('; ').find(row => row.startsWith('token')).split('=')[1];
-        const response = await fetch(`http://localhost:3000/clientes/sugestoes?termo=${termo}`, {
+        const response = await fetch(`/clientes/sugestoes?termo=${termo}`, {
             headers: {
                 'x-acess-token': token
             }
@@ -403,7 +403,7 @@
        // Confirmação do usuário
         if (confirm("Deseja mesmo alterar o status dos pedidos selecionados?")) {
             const token = document.cookie.split('; ').find(row => row.startsWith('token')).split('=')[1];
-            fetch('http://localhost:3000/alterar-status-pedidos', {
+            fetch('/alterar-status-pedidos', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

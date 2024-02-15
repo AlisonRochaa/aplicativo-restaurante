@@ -87,7 +87,7 @@
             
             try {
                 const token = document.cookie.split('; ').find(row => row.startsWith('token')).split('=')[1];
-                const response = await fetch('http://localhost:3000/cadastrar-pedido', {
+                const response = await fetch('/cadastrar-pedido', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -198,7 +198,7 @@
        // Função para fazer requisição assíncrona ao backend e obter sugestões de produtos
     async function obterSugestoesProdutos(termo) {
         const token = document.cookie.split('; ').find(row => row.startsWith('token')).split('=')[1];
-        const response = await fetch(`http://localhost:3000/produtos/sugestoes?termo=${termo}`, {
+        const response = await fetch(`/produtos/sugestoes?termo=${termo}`, {
             headers: {
                 'x-acess-token': token
             }
@@ -257,7 +257,7 @@
     // Função para fazer requisição assíncrona ao backend e obter sugestões de clientes
     async function obterSugestoesClientes(termo) {
         const token = document.cookie.split('; ').find(row => row.startsWith('token')).split('=')[1];
-        const response = await fetch(`http://localhost:3000/clientes/sugestoes?termo=${termo}`, {
+        const response = await fetch(`/clientes/sugestoes?termo=${termo}`, {
             headers: {
                 'x-acess-token': token
             }

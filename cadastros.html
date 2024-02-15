@@ -124,7 +124,7 @@
             try {
                 // Obtém o token do cookie
                 const token = document.cookie.split('; ').find(row => row.startsWith('token')).split('=')[1];
-                const response = await fetch('http://localhost:3000/produtos', {
+                const response = await fetch('/produtos', {
                 headers: {
                     'x-acess-token': token
                 }
@@ -185,7 +185,7 @@
                 // Se o cliente confirmar a exclusão
                 if (confirmacao) {
                     try {
-                        const response = await fetch(`http://localhost:3000/produtos/${idProduto}`, {
+                        const response = await fetch(`/produtos/${idProduto}`, {
                             method: 'DELETE',
                             headers: {
                                 'x-acess-token': token
@@ -234,7 +234,7 @@
                 try {
                     // Obtém o token do cookie
                     const token = document.cookie.split('; ').find(row => row.startsWith('token')).split('=')[1];
-                    const response = await fetch(`http://localhost:3000/buscar-produto?nome=${nomeProduto}`, {
+                    const response = await fetch(`/buscar-produto?nome=${nomeProduto}`, {
                         headers: {
                             'x-acess-token': token
                         }
@@ -296,7 +296,7 @@
             if (confirmacao) {
                 try {
                     const token = document.cookie.split('; ').find(row => row.startsWith('token')).split('=')[1];
-                    const response = await fetch(`http://localhost:3000/clientes/${idCliente}`, {
+                    const response = await fetch(`/clientes/${idCliente}`, {
                         method: 'DELETE',
                         headers: {
                             'x-acess-token': token
@@ -326,7 +326,7 @@
         async function obterClientes() {
             try {
                 const token = document.cookie.split('; ').find(row => row.startsWith('token')).split('=')[1];
-                const response = await fetch('http://localhost:3000/clientes', {
+                const response = await fetch('/clientes', {
                     headers: {
                         'x-acess-token': token
                     }
@@ -407,7 +407,7 @@
 
             try {
                 const token = document.cookie.split('; ').find(row => row.startsWith('token')).split('=')[1];
-                const response = await fetch(`http://localhost:3000/buscar-cliente?nome=${nomeCliente}`, {
+                const response = await fetch(`/buscar-cliente?nome=${nomeCliente}`, {
                     headers: {
                         'x-acess-token': token
                     }
@@ -501,7 +501,7 @@
             data[key] = value;
         });
 
-        enviarDadosParaBackend('http://localhost:3000/formulario-produto', data);
+        enviarDadosParaBackend('/formulario-produto', data);
     });
 
     formCliente.addEventListener('submit', event => {
@@ -512,7 +512,7 @@
             data[key] = value;
         });
 
-        enviarDadosParaBackend('http://localhost:3000/formulario-cliente', data);
+        enviarDadosParaBackend('/formulario-cliente', data);
     });
      
     </script>
