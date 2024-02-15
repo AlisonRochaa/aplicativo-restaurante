@@ -157,11 +157,6 @@ table th {
     background-color: #17a2b8
 }
 
-#buscarProduto:hover,
-#buscarCliente:hover{
-    background-color: #138496;
-}
-
 @media (min-width: 481px) {
     
     form input[type="text"],

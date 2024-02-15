@@ -463,4 +463,6 @@ app.post('/gerar-pdf', verificarAcesso, (req, res) => {
     doc.end();
 });
 
-app.listen(process.env.PORT || 3000);
+app.listen(process.env.PORT || 3000);{
+    console.log('Servidor rodando');
+}
