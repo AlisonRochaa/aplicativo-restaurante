@@ -154,7 +154,7 @@
                     const cellPreco = row.insertCell(2);
                     cellId.textContent = produto.id_produto;
                     cellNome.textContent = produto.nome_produto;
-                    cellPreco.textContent = `R$${produto.preco_produto.toFixed(2)}`;
+                    cellPreco.textContent = `R$${produto.preco_produto}`;
                 });
             } catch (error) {
                 console.error('Erro ao obter produtos:', error);
