@@ -1,10 +1,9 @@
-const connection = require('./conexao');
+const pool = require('./conexao');
 const express = require('express');
 const cors = require('cors');
 const PDFDocument = require('pdfkit');
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
-const queryAsync = promisify(connection.query).bind(connection);
 const app = express();
 const port = 3000;
 
@@ -16,6 +15,26 @@ app.use(express.json());
 const usuario = 'admin';
 const senha = '123456';
 const secret = 'secreto'
+
+//Função de conexão assíncrona
+const queryAsync = (sql, values) => {
+    return new Promise((resolve, reject) => {
+        pool.getConnection((err, connection) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            connection.query(sql, values, (error, results) => {
+                connection.release(); // Libera a conexão de volta para o pool
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve(results);
+            });
+        });
+    });
+};
 
 // Define o caminho para servir arquivos estáticos (como o HTML) da mesma pasta
 app.use(express.static(__dirname));
@@ -53,16 +72,29 @@ function verificarAcesso(req, res, next) {
 
 // Mostra todos os produtos cadastrados no banco de dados, em uma lista no front-end
 app.get('/produtos', verificarAcesso, (req, res) => {
-    const sql = 'SELECT * FROM tb_produtos';
-    connection.query(sql, (err, result) => {
+    // Obter uma conexão do pool
+    pool.getConnection((err, connection) => {
+      if (err) {
+        console.error('Erro ao obter conexão do pool:', err);
+        res.status(500).json({ error: 'Erro ao obter conexão do pool' });
+        return;
+      }
+  
+      const sql = 'SELECT * FROM tb_produtos';
+      connection.query(sql, (err, result) => {
+        // Liberar a conexão de volta para o pool
+        connection.release();
+  
         if (err) {
-            console.error('Erro ao buscar produtos:', err);
-            res.status(500).json({ error: 'Erro ao buscar produtos' });
-            return;
+          console.error('Erro ao buscar produtos:', err);
+          res.status(500).json({ error: 'Erro ao buscar produtos' });
+          return;
         }
+  
         res.json(result);
+      });
     });
-});
+  });
 
 // Rota para excluir um produto pelo ID
 app.delete('/produtos/:id', verificarAcesso, (req, res) => {
@@ -71,8 +103,8 @@ app.delete('/produtos/:id', verificarAcesso, (req, res) => {
     // Query SQL para excluir o produto com base no ID fornecido
     const sql = `DELETE FROM tb_produtos WHERE id_produto = ?`;
 
-    // Executar a query no banco de dados
-    connection.query(sql, [idProduto], (error, results) => {
+    // Executar a query no banco de dados usando o pool de conexões
+    pool.query(sql, [idProduto], (error, results) => {
         if (error) {
             console.error('Erro ao excluir o produto:', error);
             res.status(500).send('Erro ao excluir o produto');
@@ -91,7 +123,8 @@ app.get('/buscar-produto', verificarAcesso, (req, res) => {
 
     const nomePesquisa = '%' + nomeProduto + '%';
   
-    connection.query(sql, [nomePesquisa], (err, results) => {
+    // Executa a consulta no banco de dados usando o pool de conexões
+    pool.query(sql, [nomePesquisa], (err, results) => {
       if (err) {
         console.error('Erro ao buscar produto:', err);
         res.status(500).send('Erro ao buscar produto.');
@@ -110,7 +143,7 @@ app.get('/buscar-produto', verificarAcesso, (req, res) => {
 // Mostra todos os clientes cadastrados no banco de dados, em uma lista no front-end
 app.get('/clientes', verificarAcesso, (req, res) => {
     const sql = 'SELECT * FROM tb_cliente';
-    connection.query(sql, (err, result) => {
+    pool.query(sql, (err, result) => {
         if (err) {
             console.error('Erro ao buscar clientes:', err);
             res.status(500).json({ error: 'Erro ao buscar clientes' });
@@ -129,7 +162,7 @@ app.delete('/clientes/:id', verificarAcesso, (req, res) => {
     const sql = `DELETE FROM tb_cliente WHERE id_cliente = ?`;
 
     // Executar a query no banco de dados
-    connection.query(sql, [idCliente], (error, results) => {
+    pool.query(sql, [idCliente], (error, results) => {
         if (error) {
             console.error('Erro ao excluir o cliente:', error);
             res.status(500).send('Erro ao excluir o cliente');
@@ -148,7 +181,7 @@ app.get('/buscar-cliente', verificarAcesso, (req, res) => {
 
     const nomePesquisa = '%' + nomeCliente + '%';
   
-    connection.query(sql, [nomePesquisa], (err, results) => {
+    pool.query(sql, [nomePesquisa], (err, results) => {
       if (err) {
         console.error('Erro ao buscar cliente:', err);
         res.status(500).send('Erro ao buscar cliente.');
@@ -170,7 +203,7 @@ app.post('/formulario-produto', verificarAcesso, (req, res) => {
     const { nomeProduto, precoProduto } = req.body;
 
     const sql = 'INSERT INTO tb_produtos (nome_produto, preco_produto) VALUES (?, ?)';
-    connection.query(sql, [nomeProduto, precoProduto], (err, result) => {
+    pool.query(sql, [nomeProduto, precoProduto], (err, result) => {
     if (err) {
       console.error('Erro ao inserir dados no banco de dados:', err);
       res.status(500).send('Erro ao inserir dados no banco de dados');
@@ -186,7 +219,7 @@ app.post('/formulario-cliente', verificarAcesso, (req, res) => {
     const { nomeCliente, cpfCliente, telefoneCliente, bairroCliente, ruaCliente, numeroCasaCliente } = req.body;
 
     const sql = 'INSERT INTO tb_cliente (nome, cpf, telefone, bairro, rua, numero) VALUES (?, ?, ?, ?, ?, ?)';
-  connection.query(sql, [nomeCliente, cpfCliente, telefoneCliente, bairroCliente, ruaCliente, numeroCasaCliente], (err, result) => {
+    pool.query(sql, [nomeCliente, cpfCliente, telefoneCliente, bairroCliente, ruaCliente, numeroCasaCliente], (err, result) => {
     if (err) {
       console.error('Erro ao inserir dados no banco de dados:', err);
       res.status(500).send('Erro ao inserir dados no banco de dados');
@@ -228,7 +261,7 @@ app.post('/cadastrar-pedido', verificarAcesso, (req, res) => {
 
 
     const sql = `INSERT INTO tb_pedidos (nome_cliente, itens_pedido, valor_total, data_pedido, hora_pedido) VALUES (?, ?, ?, ?, ?)`;
-    connection.query(sql, [dadosPedido.nomeCliente, itensPedidoString, valorTotalFormatado, dadosPedido.data, dadosPedido.hora], 
+    pool.query(sql, [dadosPedido.nomeCliente, itensPedidoString, valorTotalFormatado, dadosPedido.data, dadosPedido.hora], 
     (err, result) => {
     if (err) {
         console.error('Erro ao inserir os dados do pedido:', err);
@@ -245,7 +278,7 @@ app.get('/clientes/sugestoes', verificarAcesso, (req, res) => {
 
     // Consulta SQL para buscar clientes com base no termo de busca
     const sql = 'SELECT nome FROM tb_cliente WHERE nome LIKE ?';
-    connection.query(sql, [`%${termo}%`], (err, rows) => {
+    pool.query(sql, [`%${termo}%`], (err, rows) => {
         if (err) {
             console.error('Erro ao buscar sugestões de clientes:', err);
             res.status(500).json({ error: 'Erro ao buscar sugestões de clientes' });
@@ -264,7 +297,7 @@ app.get('/produtos/sugestoes', verificarAcesso, (req, res) => {
 
     // Consulta SQL para buscar produtos com base no termo de busca
     const sql = 'SELECT nome_produto, preco_produto FROM tb_produtos WHERE nome_produto LIKE ?';
-    connection.query(sql, [`%${termo}%`], (err, rows) => {
+    pool.query(sql, [`%${termo}%`], (err, rows) => {
         if (err) {
             console.error('Erro ao buscar sugestões de produtos:', err);
             res.status(500).json({ error: 'Erro ao buscar sugestões de produtos' });
@@ -289,7 +322,7 @@ app.get('/historico-pedidos', verificarAcesso, (req, res) => {
     const sql = 'SELECT * FROM tb_pedidos';
   
     // Executa a consulta SQL
-    connection.query(sql, (err, result) => {
+    pool.query(sql, (err, result) => {
       if (err) {
         console.error('Erro ao buscar pedidos:', err);
         res.status(500).json({ error: 'Erro ao buscar pedidos' });
@@ -301,7 +334,7 @@ app.get('/historico-pedidos', verificarAcesso, (req, res) => {
 });
 
 // Rota para obter o histórico a partir da busca
-app.get('/historico-pedidos-busca', verificarAcesso, (req, res) => {
+app.get('/historico-pedidos-busca', verificarAcesso, async (req, res) => {
     const { nomeCliente, dataInicio, dataFim } = req.query;
 
     // Consulta SQL para buscar pedidos do cliente
@@ -310,23 +343,24 @@ app.get('/historico-pedidos-busca', verificarAcesso, (req, res) => {
     // Consulta SQL para buscar informações do cliente
     const sqlCliente = `SELECT * FROM tb_cliente WHERE nome = ?`;
 
-    // Execute as consultas SQL em paralelo
-    Promise.all([
-        queryAsync(sqlPedidos),
-        queryAsync(sqlCliente, [nomeCliente])
-    ])
-    .then(([pedidosResult, clienteResult]) => {
+    try {
+        // Execute as consultas SQL em paralelo
+        const [pedidosResult, clienteResult] = await Promise.all([
+            queryAsync(sqlPedidos),
+            queryAsync(sqlCliente, [nomeCliente])
+        ]);
+
         // Combine os resultados das consultas em um único objeto de resposta
         const response = {
             pedidos: pedidosResult,
             cliente: clienteResult[0] // Assume que a consulta ao cliente retorna apenas um resultado
         };
+        
         res.json(response);
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Erro ao buscar pedidos e informações do cliente:', error);
         res.status(500).json({ error: 'Erro ao buscar pedidos e informações do cliente' });
-    });
+    }
 });
 
 // Rota para excluir um pedido baseado no ID
@@ -337,7 +371,7 @@ app.delete('/pedidos/:id', verificarAcesso, (req, res) => {
     const sql = `DELETE FROM tb_pedidos WHERE id_pedido = ?`;
 
     // Executar a query no banco de dados
-    connection.query(sql, [idPedido], (error, results) => {
+    pool.query(sql, [idPedido], (error, results) => {
         if (error) {
             console.error('Erro ao excluir o pedido:', error);
             res.status(500).send('Erro ao excluir o pedido');
@@ -357,57 +391,69 @@ app.post('/alterar-status-pedidos', verificarAcesso, (req, res) => {
         return;
     }
 
-    // Inicia a transação
-    connection.beginTransaction((err) => {
+    // Obtém uma conexão do pool
+    pool.getConnection((err, connection) => {
         if (err) {
-            console.error('Erro ao iniciar transação:', err);
-            res.status(500).send('Erro ao iniciar transação.');
+            console.error('Erro ao obter conexão do pool:', err);
+            res.status(500).send('Erro ao obter conexão do pool.');
             return;
         }
 
-        // Itera sobre os IDs dos pedidos para alterar
-        for (const idPedido of pedidosParaAlterar) {
-            // Consulta o status atual do pedido
-            connection.query('SELECT status_pedido FROM tb_pedidos WHERE id_pedido = ?', [idPedido], (err, rows) => {
+        // Inicia a transação
+        connection.beginTransaction((err) => {
+            if (err) {
+                console.error('Erro ao iniciar transação:', err);
+                res.status(500).send('Erro ao iniciar transação.');
+                return;
+            }
+
+            // Itera sobre os IDs dos pedidos para alterar
+            for (const idPedido of pedidosParaAlterar) {
+                // Consulta o status atual do pedido
+                connection.query('SELECT status_pedido FROM tb_pedidos WHERE id_pedido = ?', [idPedido], (err, rows) => {
+                    if (err) {
+                        console.error('Erro ao consultar status do pedido:', err);
+                        connection.rollback(() => {
+                            console.error('Rollback da transação devido a erro na consulta.');
+                            res.status(500).send('Erro ao consultar status do pedido.');
+                        });
+                        return;
+                    }
+
+                    if (Array.isArray(rows) && rows.length > 0) {
+                        const novoStatus = rows[0].status_pedido === 0 ? 1 : 0;
+
+                        // Atualiza o status do pedido
+                        connection.query('UPDATE tb_pedidos SET status_pedido = ? WHERE id_pedido = ?', [novoStatus, idPedido], (err) => {
+                            if (err) {
+                                console.error('Erro ao atualizar status do pedido:', err);
+                                connection.rollback(() => {
+                                    console.error('Rollback da transação devido a erro na atualização.');
+                                    res.status(500).send('Erro ao atualizar status do pedido.');
+                                });
+                                return;
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Comita a transação
+            connection.commit((err) => {
                 if (err) {
-                    console.error('Erro ao consultar status do pedido:', err);
+                    console.error('Erro ao comitar transação:', err);
                     connection.rollback(() => {
-                        console.error('Rollback da transação devido a erro na consulta.');
-                        res.status(500).send('Erro ao consultar status do pedido.');
+                        console.error('Rollback da transação devido a erro no commit.');
+                        res.status(500).send('Erro ao comitar transação.');
                     });
                     return;
                 }
 
-                if (Array.isArray(rows) && rows.length > 0) {
-                    const novoStatus = rows[0].status_pedido === 0 ? 1 : 0;
+                // Libera a conexão de volta para o pool
+                connection.release();
 
-                    // Atualiza o status do pedido
-                    connection.query('UPDATE tb_pedidos SET status_pedido = ? WHERE id_pedido = ?', [novoStatus, idPedido], (err) => {
-                        if (err) {
-                            console.error('Erro ao atualizar status do pedido:', err);
-                            connection.rollback(() => {
-                                console.error('Rollback da transação devido a erro na atualização.');
-                                res.status(500).send('Erro ao atualizar status do pedido.');
-                            });
-                            return;
-                        }
-                    });
-                }
+                res.status(200).send('Status dos pedidos alterado com sucesso.');
             });
-        }
-
-        // Comita a transação
-        connection.commit((err) => {
-            if (err) {
-                console.error('Erro ao comitar transação:', err);
-                connection.rollback(() => {
-                    console.error('Rollback da transação devido a erro no commit.');
-                    res.status(500).send('Erro ao comitar transação.');
-                });
-                return;
-            }
-
-            res.status(200).send('Status dos pedidos alterado com sucesso.');
         });
     });
 });
